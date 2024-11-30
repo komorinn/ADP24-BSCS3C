@@ -6,6 +6,8 @@ python 3.12.7 (atleast 3.6 to 3.12 can work with dlib)
 cmake
 dlib
 face_recognition
+opencv
+imutils
 ```
 
 ## Installation
