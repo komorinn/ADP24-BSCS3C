@@ -14,6 +14,8 @@ Install these files in the environment:
 - https://cmake.org/download/
 - ``` pip install dlib ```
 - ``` pip install face_recognition ```
+- ``` pip install opencv ```
+- ``` pip install imutils ```
 
 ## Checking for correct requirements
 
@@ -38,3 +40,14 @@ Check the face_recognition is installed
 ```
 pip show face_recognition
 ```
+
+Check the opencv is installed
+```
+pip show opencv
+```
+
+Check the imutils is installed
+```
+pip show imutils
+```
+
