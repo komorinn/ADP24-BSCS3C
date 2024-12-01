@@ -122,7 +122,7 @@ def captureImgSample(img):
         roi_img = img[coordinate[1]:coordinate[1] + coordinate[3], coordinate[0]:coordinate[0] + coordinate[2]]
         user_id = 1
         check = 1
-        cv2.imwrite("Dataset/Labang/Image." + str(user_id) + "." + str(img_id) + ".jpg", roi_img)
+        cv2.imwrite("Dataset/Face_Capture/Image." + str(user_id) + "." + str(img_id) + ".jpg", roi_img)
         app.update_status("Face Captured", img_id)
     return check
 
