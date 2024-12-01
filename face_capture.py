@@ -1,13 +1,109 @@
 import cv2
 from tkinter import *
-from threading import Thread  # Added import for threading
+from tkinter import ttk
+from threading import Thread
+import os
+
+# Ensure directory exists 
+os.makedirs("Dataset/Labang", exist_ok=True)
 
 faceCascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-# variable
+# Variables
 img_id = 1
 cap = cv2.VideoCapture(0)
-capturing = False  # this is for stopping the capturing / end capture.
+capturing = False
+
+class FaceCaptureUI:
+    def __init__(self):
+        self.window = Tk()
+        self.window.title("Face Capture System")
+        self.window.geometry("400x500")
+        self.window.configure(bg='#f0f0f0')
+        
+        # Status variables
+        self.status_var = StringVar(value="Ready")
+        self.count_var = StringVar(value="Images: 0")
+        
+        self.create_widgets()
+        
+    def create_widgets(self):
+        # Title Frame
+        title_frame = Frame(self.window, bg='#f0f0f0')
+        title_frame.pack(pady=20)
+        
+        Label(title_frame, 
+              text="Face Capture System",
+              font=("Helvetica", 24, "bold"),
+              bg='#f0f0f0').pack()
+        
+        # Status Frame
+        status_frame = Frame(self.window, bg='#f0f0f0')
+        status_frame.pack(pady=20, fill=X, padx=20)
+        
+        # Status indicator
+        self.status_indicator = Label(status_frame,
+                                    textvariable=self.status_var,
+                                    font=("Helvetica", 12),
+                                    bg='#e0e0e0',
+                                    relief=RIDGE,
+                                    padx=10,
+                                    pady=5)
+        self.status_indicator.pack(fill=X)
+        
+        # Counter
+        Label(status_frame,
+              textvariable=self.count_var,
+              font=("Helvetica", 12),
+              bg='#f0f0f0').pack(pady=10)
+        
+        # Buttons Frame
+        button_frame = Frame(self.window, bg='#f0f0f0')
+        button_frame.pack(pady=20)
+        
+        # Start Button
+        self.start_button = ttk.Button(button_frame,
+                                     text="Start Capture",
+                                     style='Green.TButton',
+                                     command=self.start_capture)
+        self.start_button.pack(pady=10)
+        
+        # Stop Button
+        self.stop_button = ttk.Button(button_frame,
+                                    text="Stop Capture",
+                                    style='Red.TButton',
+                                    command=self.stop_capture,
+                                    state=DISABLED)
+        self.stop_button.pack(pady=10)
+        
+        # Configure styles
+        style = ttk.Style()
+        style.configure('Green.TButton',
+                       font=('Helvetica', 12),
+                       padding=10)
+        style.configure('Red.TButton',
+                       font=('Helvetica', 12),
+                       padding=10)
+        
+    def update_status(self, status, count):
+        self.status_var.set(status)
+        self.count_var.set(f"Images: {count}")
+        
+    def start_capture(self):
+        global capturing
+        capturing = True
+        self.start_button.configure(state=DISABLED)
+        self.stop_button.configure(state=NORMAL)
+        self.update_status("Capturing...", img_id)
+        startCapture()
+        
+    def stop_capture(self):
+        global capturing
+        capturing = False
+        self.start_button.configure(state=NORMAL)
+        self.stop_button.configure(state=DISABLED)
+        self.update_status("Stopped", img_id)
+        stopCapture()
 
 # function to capture images
 def captureImgSample(img):
@@ -27,6 +123,7 @@ def captureImgSample(img):
         user_id = 1
         check = 1
         cv2.imwrite("Dataset/Labang/Image." + str(user_id) + "." + str(img_id) + ".jpg", roi_img)
+        app.update_status("Face Captured", img_id)
     return check
 
 # function for capturing
@@ -63,38 +160,14 @@ def stopCapture():
     cap.release()
     cv2.destroyAllWindows()
 
-# Tkinter Window
-window = Tk()
-window.title("Start Capturing Dataset.")
-window.geometry("300x200")
+def cleanup():
+    global capturing
+    capturing = False
+    cap.release()
+    cv2.destroyAllWindows()
+    app.window.quit()
 
-label = Label(window,
-              text="Ready to Capture?",
-              font=("Arial", 18, "bold",))
-label.pack(pady=20)
-
-start_button = Button(window,
-                      text="Start Capture",
-                      font=("Arial", 14),
-                      bg="green",
-                      fg="white",
-                      activeforeground="white",
-                      activebackground="green",
-                      padx=10,
-                      pady=5,
-                      command=startCapture)
-start_button.pack()
-
-stop_button = Button(window,
-                     text="Stop Capture",
-                     font=("Arial", 14),
-                     bg="red",
-                     fg="white",
-                     activeforeground="white",
-                     activebackground="red",
-                     padx=10,
-                     pady=5,
-                     command=stopCapture)
-stop_button.pack()
-
-window.mainloop()
+# Create and run UI
+if __name__ == "__main__":
+    app = FaceCaptureUI()
+    app.window.mainloop()
