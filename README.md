@@ -18,6 +18,7 @@ Install these files in the environment:
 - ``` pip install face_recognition ```
 - ``` pip install opencv ```
 - ``` pip install imutils ```
+- ``` curl -o haarcascade_frontalface_default.xml https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml ```
 
 ## Checking for correct requirements
 
@@ -53,3 +54,21 @@ Check the imutils is installed
 pip show imutils
 ```
 
+Get Haar Cascade File 
+```
+curl -o haarcascade_frontalface_default.xml https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
+```
+
+Create Director Structure
+```
+mkdir -p Dataset/Face_Capture
+```
+
+Run the program using:
+```
+python face_capture.py
+```
+If you get webcam errors, try changing the camera index (switching cameras, try different numbers (0, 1, 2) if 0 doesn't work):
+```
+cap = cv2.VideoCapture(1) 
+```
