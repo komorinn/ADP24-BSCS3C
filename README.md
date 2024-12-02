@@ -59,7 +59,7 @@ Get Haar Cascade File
 curl -o haarcascade_frontalface_default.xml https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml
 ```
 
-Create Director Structure
+Create Directory Structure (the photos goes here)
 ```
 mkdir -p Dataset/Face_Capture
 ```
