@@ -71,4 +71,4 @@ python face_capture.py
 If you get webcam errors, try changing the camera index (switching cameras, try different numbers (0, 1, 2) if 0 doesn't work):
 ```
 cap = cv2.VideoCapture(1) 
-```
+```~
