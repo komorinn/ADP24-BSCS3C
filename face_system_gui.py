@@ -38,12 +38,15 @@ class FaceRecognitionGUI:
         
         # Buttons
         btn_frame = ttk.Frame(main_frame)
-        btn_frame.pack(pady=20)
-        
-        ttk.Button(btn_frame, text="Train New Face", command=self.start_training, width=20).pack(pady=10)
-        ttk.Button(btn_frame, text="Start Recognition", command=self.start_recognition, width=20).pack(pady=10)
-        ttk.Button(btn_frame, text="Stop", command=self.stop_video, width=20).pack(pady=10)  # Added Stop button
-        ttk.Button(btn_frame, text="Exit", command=root.quit, width=20).pack(pady=10)
+        btn_frame.pack(pady=10)
+
+        ttk.Button(btn_frame, text="Train New Face", command=self.start_training, width=20).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(btn_frame, text="Start Recognition", command=self.start_recognition, width=20).grid(row=0, column=1, padx=5, pady=5)
+        ttk.Button(btn_frame, text="Stop", command=self.stop_video, width=20).grid(row=1, column=0, padx=5, pady=5)
+        ttk.Button(btn_frame, text="Cancel Training", command=self.cancel_training, width=20).grid(row=1, column=1, padx=5, pady=5)
+        ttk.Button(btn_frame, text="View Database", command=self.view_database, width=20).grid(row=2, column=0, padx=5, pady=5)
+        ttk.Button(btn_frame, text="Delete Specific Face", command=self.delete_specific_face, width=20).grid(row=2, column=1, padx=5, pady=5)
+        ttk.Button(btn_frame, text="Exit", command=root.quit, width=20).grid(row=3, column=0, columnspan=2, padx=5, pady=5)
         
         # Video frame
         self.video_frame = ttk.Label(main_frame)
@@ -54,6 +57,7 @@ class FaceRecognitionGUI:
         self.is_recognizing = False
         self.face_encodings = []
         self.capture_count = 0
+        self.training_canceled = False  # Added flag for training cancellation
         self.setup_key_bindings()
 
     def setup_key_bindings(self):
@@ -90,12 +94,13 @@ class FaceRecognitionGUI:
         if not self.name:
             return
             
+        self.training_canceled = False  # Reset cancellation flag
         self.is_training = True
         self.is_recognizing = False
         self.capture_count = 0
         self.face_encodings = []
         self.start_video()
-        messagebox.showinfo("Training", "Press 'c' to capture face (5 different angles needed)\nPress 'q' to quit")
+        messagebox.showinfo("Training", "Press 'c' to capture face (6 different angles needed)\nPress 'q' to quit")
 
     def start_recognition(self):
         if not all([self.detector, self.predictor, self.face_rec]):
@@ -230,7 +235,7 @@ class FaceRecognitionGUI:
     def capture_face(self, frame=None):
         if frame is None:
             frame = self.current_frame
-        if frame is None or self.capture_count >= 5:
+        if frame is None or self.capture_count >= 6 or self.training_canceled:  # Changed to 6 captures
             return
             
         faces = self.detector(frame)
@@ -240,9 +245,9 @@ class FaceRecognitionGUI:
             face_descriptor = np.array(face_descriptor) / np.linalg.norm(face_descriptor)  # Normalize the descriptor
             self.face_encodings.append(face_descriptor)
             self.capture_count += 1
-            messagebox.showinfo("Capture", f"Captured {self.capture_count}/5 faces")
+            messagebox.showinfo("Capture", f"Captured {self.capture_count}/6 faces")
             
-            if self.capture_count == 5:
+            if self.capture_count == 6:  # Changed to 6 captures
                 self.save_training_data()
         else:
             messagebox.showwarning("Warning", "Please ensure only one face is visible")
@@ -267,6 +272,11 @@ class FaceRecognitionGUI:
         messagebox.showinfo("Success", f"Successfully trained face for {self.name}")
         self.stop_video()
 
+    def cancel_training(self):
+        self.training_canceled = True
+        self.stop_video()
+        messagebox.showinfo("Training", "Training has been canceled")
+
     def stop_video(self):
         if self.cap is not None:
             self.cap.release()
@@ -274,6 +284,68 @@ class FaceRecognitionGUI:
         self.is_training = False
         self.is_recognizing = False
         self.video_frame.configure(image='')
+
+    def view_database(self):
+        if not os.path.exists(self.face_db_path):
+            messagebox.showinfo("Database", "No face database found!")
+            return
+            
+        try:
+            with open(self.face_db_path, "rb") as f:
+                database = pickle.load(f)
+                
+            if not database:
+                messagebox.showinfo("Database", "No faces stored in the database!")
+                return
+                
+            db_info = "\n=== Stored Face Data ===\n"
+            db_info += f"Total people stored: {len(database)}\n\nPeople in database:\n"
+            for i, data in enumerate(database, 1):
+                db_info += f"{i}. Name: {data['name']} (Faces stored: {len(data['encodings'])})\n"
+                
+            name_to_delete = simpledialog.askstring("Delete Face", f"{db_info}\nEnter the name of the face to delete (or leave blank to cancel):")
+            if not name_to_delete:
+                return
+                
+            updated_database = [data for data in database if data['name'] != name_to_delete]
+            
+            if len(updated_database) == len(database):
+                messagebox.showinfo("Database", f"No face found with the name '{name_to_delete}'")
+            else:
+                with open(self.face_db_path, "wb") as f:
+                    pickle.dump(updated_database, f)
+                messagebox.showinfo("Database", f"Successfully deleted face with name '{name_to_delete}'")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error reading database: {str(e)}")
+
+    def delete_specific_face(self):
+        if not os.path.exists(self.face_db_path):
+            messagebox.showinfo("Database", "No face database found!")
+            return
+            
+        try:
+            with open(self.face_db_path, "rb") as f:
+                database = pickle.load(f)
+                
+            names = [data['name'] for data in database]
+            if not names:
+                messagebox.showinfo("Database", "No faces stored in the database!")
+                return
+                
+            name_to_delete = simpledialog.askstring("Delete Face", f"Enter the name of the face to delete:\nAvailable names: {', '.join(names)}")
+            if not name_to_delete:
+                return
+                
+            updated_database = [data for data in database if data['name'] != name_to_delete]
+            
+            if len(updated_database) == len(database):
+                messagebox.showinfo("Database", f"No face found with the name '{name_to_delete}'")
+            else:
+                with open(self.face_db_path, "wb") as f:
+                    pickle.dump(updated_database, f)
+                messagebox.showinfo("Database", f"Successfully deleted face with name '{name_to_delete}'")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error reading database: {str(e)}")
 
     def __del__(self):
         if self.cap is not None:
